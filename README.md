@@ -27,3 +27,7 @@ Run `model.py` to train the neural network model. Run `play.py` to see the game 
 ## Tech stack
 
 tensorflow, pygame, numpy, keras, matplotlib
+
+## TODO
+
+State should include "obstacles" so the location of the wall and tail pieces are known

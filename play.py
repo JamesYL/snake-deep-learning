@@ -19,7 +19,7 @@ while not snake.over:
             pygame.quit()
             exit()
     curr = pygame.time.get_ticks()
-    if curr - last >= 400:
+    if curr - last >= 50:
         last = curr
         state = get_state(snake).reshape(-1, TOTAL_STATES)
         scores = trained_model.predict(state)
