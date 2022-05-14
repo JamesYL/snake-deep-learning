@@ -3,9 +3,9 @@ import numpy as np
 import tensorflow as tf
 from snake import Snake, directions
 
-TOTAL_STATES = 6
+TOTAL_STATES = 8
 TOTAL_ACTIONS = 4
-model_path = "./trained/model"
+model_path = "./model"
 
 
 def get_state(snake: Snake):
@@ -15,8 +15,10 @@ def get_state(snake: Snake):
     if snake.tail:
         immediate_tail = snake.tail[0]
     return np.array([[
-        food[1] < head[1],
         food[0] < head[0],
+        food[0] > head[0],
+        food[1] < head[1],
+        food[1] > head[1],
         head[0] - 1 == immediate_tail[0],
         head[0] + 1 == immediate_tail[0],
         head[1] - 1 == immediate_tail[1],
@@ -31,6 +33,7 @@ def get_model():
         model = tf.keras.models.Sequential()
         model.add(tf.keras.layers.InputLayer(input_shape=(TOTAL_STATES,)))
         model.add(tf.keras.layers.Dense(8, activation='relu'))
+        model.add(tf.keras.layers.Dense(6, activation='relu'))
         model.add(tf.keras.layers.Dense(TOTAL_ACTIONS, activation='linear'))
         model.compile(loss='mse', optimizer='adam', metrics=['mae'])
         return model
@@ -39,7 +42,7 @@ def get_model():
 if __name__ == "__main__":
     model = get_model()
 
-    episodes = 500
+    episodes = 50
     learning_rate = 0.81
     discount = 0.96
     epsilon = 0.8
@@ -59,7 +62,7 @@ if __name__ == "__main__":
                 action = np.argmax(model.predict(state))
 
             # Calculating reward
-            reward = 0
+            reward = 1
             old_head = snake.head
             food = snake.food
             caught_food, over, new_head, new_tail = snake.step(action)
@@ -68,22 +71,16 @@ if __name__ == "__main__":
             elif over:
                 reward = -100
             else:
-                old_dist = abs(old_head[0] - food[0]) + \
-                    abs(old_head[1] - food[1])
-                new_dist = abs(new_head[0] - food[0]) + \
-                    abs(new_head[1] - food[1])
-                if new_dist < old_dist:
-                    reward = 1
-                else:
+                old_dist = np.linalg.norm(np.array(old_head) - np.array(food))
+                new_dist = np.linalg.norm(np.array(new_head) - np.array(food))
+                if old_dist < new_dist:
                     reward = -1
 
             new_state = get_state(snake)
             target_vector = model.predict(state)[0]
-            if reward >= 100:
-                print(reward)
-            target = reward + discount * \
-                np.max(model.predict(state))
-            target_vector[action] += learning_rate * target
+            target = reward + discount * np.max(model.predict(state))
+            target_vector[action] = target_vector[action] + \
+                learning_rate * (target - target_vector[action])
             target_vector = target_vector.reshape(-1, TOTAL_ACTIONS)
             model.fit(state, target_vector, verbose=0)
             state = new_state
