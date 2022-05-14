@@ -1,4 +1,5 @@
 from random import choice
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from snake import Snake, directions
@@ -16,13 +17,13 @@ def get_state(snake: Snake):
         immediate_tail = snake.tail[0]
     return np.array([[
         food[0] < head[0],
-        food[0] > head[0],
         food[1] < head[1],
+        food[0] > head[0],
         food[1] > head[1],
         head[0] - 1 == immediate_tail[0],
-        head[0] + 1 == immediate_tail[0],
         head[1] - 1 == immediate_tail[1],
-        head[1] + 1 == immediate_tail[1]
+        head[0] + 1 == immediate_tail[0],
+        head[1] + 1 == immediate_tail[1],
     ]])
 
 
@@ -32,9 +33,9 @@ def get_model():
     except:
         model = tf.keras.models.Sequential()
         model.add(tf.keras.layers.InputLayer(input_shape=(TOTAL_STATES,)))
-        model.add(tf.keras.layers.Dense(8, activation='relu'))
         model.add(tf.keras.layers.Dense(6, activation='relu'))
-        model.add(tf.keras.layers.Dense(TOTAL_ACTIONS, activation='linear'))
+        model.add(tf.keras.layers.Dense(6, activation='relu'))
+        model.add(tf.keras.layers.Dense(TOTAL_ACTIONS, activation='softmax'))
         model.compile(loss='mse', optimizer='adam', metrics=['mae'])
         return model
 
@@ -42,7 +43,7 @@ def get_model():
 if __name__ == "__main__":
     model = get_model()
 
-    episodes = 50
+    episodes = 1500
     learning_rate = 0.81
     discount = 0.96
     epsilon = 0.8
@@ -88,15 +89,17 @@ if __name__ == "__main__":
             state = new_state
             curr_step += 1
         rewards.append(snake.score)
+    model.save(model_path)
 
     avg_rewards = []
 
-    def get_average(values):
-        return sum(values) / len(values)
-
-    bin_size = 50
+    bin_size = 20
     for i in range(0, len(rewards), bin_size):
-        avg_rewards.append(get_average(rewards[i:i + bin_size]))
+        sliced = rewards[i:i + bin_size]
+        avg_rewards.append(sum(sliced) / len(sliced))
     print(avg_rewards)
 
-    model.save(model_path)
+    plt.plot(rewards)
+    plt.show()
+    plt.plot(avg_rewards)
+    plt.show()

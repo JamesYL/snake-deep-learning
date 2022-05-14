@@ -23,8 +23,8 @@ while not snake.over:
         last = curr
         state = get_state(snake).reshape(-1, TOTAL_STATES)
         scores = trained_model.predict(state)
-        print(f"LEFT: {scores[0][0]} UP: {scores[0][1]} RIGHT: {scores[0][2]} DOWN: {scores[0][3]}")
         action = np.argmax(scores)
+        print(f"LEFT: {scores[0][0]} UP: {scores[0][1]} RIGHT: {scores[0][2]} DOWN: {scores[0][3]}")
         snake.step(action)
         gui.draw()
 
