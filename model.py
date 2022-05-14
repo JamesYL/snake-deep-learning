@@ -50,6 +50,8 @@ if __name__ == "__main__":
 
     rewards = []
     for i in range(episodes):
+        if i % 10 == 0:
+            model.save(model_path)
         print(f"Episode {i}")
         snake = Snake()
         state = get_state(snake)
